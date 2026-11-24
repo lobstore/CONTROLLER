@@ -1,0 +1,27 @@
+using System;
+using UnityEngine;
+using Alchemy.Inspector;
+using LOGIYGames.Core;
+namespace LOGIYGames.Character
+{
+    public class MovementStateMachineViewer : MonoBehaviour
+    {
+        Actor Character;
+        StateMachine StateMachine;
+        [ReadOnly] public string _currentStateName;
+        [ReadOnly] public string _lastTransition;
+        private void Awake()
+        {
+            Character = GetComponent<Actor>();
+        }
+        private void Start()
+        {
+            StateMachine = Character.MovementStateMachine;
+        }
+        private void Update()
+        {
+            _currentStateName = StateMachine.CurrentNode.State.ToString();
+            _lastTransition = StateMachine.LastTransition;
+        }
+    }
+}
