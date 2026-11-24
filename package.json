@@ -4,9 +4,6 @@
   "displayName": "LOGIY Games Character Controller",
   "description": "Modular character, locomotion, animation, camera and lock-on framework for Unity.",
   "unity": "2022.3",
-  "dependencies": {
-    "com.unity.inputsystem": "1.7.0"
-  },
   "keywords": [
     "character",
     "controller",
