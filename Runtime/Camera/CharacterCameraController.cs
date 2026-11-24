@@ -4,8 +4,8 @@ namespace LOGIYGames.CharacterController
 {
     /// <summary>
     /// Drives physical Unity Camera outputs from data-driven view definitions.
-    /// A project can map first and third person to separate Camera components,
-    /// or leave the map empty and reuse one output. No virtual-camera vendor required.
+    /// A project can map first/third person projections or individual view IDs
+    /// to separate Cameras, or reuse one output. No virtual-camera vendor required.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CharacterCameraController : MonoBehaviour, ICharacterCameraService
@@ -76,7 +76,7 @@ namespace LOGIYGames.CharacterController
                 return false;
 
             _activeView = view;
-            SelectOutput(view.Projection);
+            SelectOutput(view);
             if (_activeCamera != null)
                 _activeCamera.fieldOfView = view.FieldOfView;
 
@@ -154,25 +154,46 @@ namespace LOGIYGames.CharacterController
             TickThirdPerson(character, view, cameraTransform, lockOnAimPoint, deltaTime);
         }
 
-        private void SelectOutput(CameraProjectionMode projection)
+        private void SelectOutput(CameraViewDefinition view)
         {
-            UnityEngine.Camera selected = defaultCamera;
+            UnityEngine.Camera selected = null;
             if (cameraOutputs != null)
             {
+                // Exact view binding wins over generic projection binding.
                 for (int i = 0; i < cameraOutputs.Length; i++)
                 {
                     CameraOutputBinding binding = cameraOutputs[i];
-                    if (binding != null && binding.Projection == projection && binding.Camera != null)
+                    if (binding != null && binding.Camera != null &&
+                        !string.IsNullOrWhiteSpace(binding.ViewId) &&
+                        string.Equals(binding.ViewId, view.ViewId, System.StringComparison.Ordinal))
                     {
                         selected = binding.Camera;
                         break;
                     }
                 }
+
+                if (selected == null)
+                {
+                    for (int i = 0; i < cameraOutputs.Length; i++)
+                    {
+                        CameraOutputBinding binding = cameraOutputs[i];
+                        if (binding != null && binding.Camera != null &&
+                            string.IsNullOrWhiteSpace(binding.ViewId) &&
+                            binding.Projection == view.Projection)
+                        {
+                            selected = binding.Camera;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (selected == null)
+                selected = defaultCamera;
+
+            if (selected == null)
             {
-                Debug.LogError("No Camera output is configured for the active view.", this);
+                Debug.LogError("No Camera output is configured for view '" + view.ViewId + "'.", this);
                 return;
             }
 

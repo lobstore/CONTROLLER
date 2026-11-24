@@ -31,6 +31,8 @@ namespace LOGIYGames.CharacterController
         private CharacterInputFrame _lastInput;
         private CharacterFacingMode _facingModeBeforeLockOn;
         private bool _hasFacingModeBeforeLockOn;
+        private string _viewIdBeforeLockOn;
+        private bool _hasCameraViewBeforeLockOn;
 
         public CharacterAgent CurrentCharacter { get { return _currentCharacter; } }
         public CharacterFacingMode FacingMode { get { return _locomotion == null ? CharacterFacingMode.MovementDirection : _locomotion.FacingMode; } }
@@ -72,9 +74,9 @@ namespace LOGIYGames.CharacterController
             if (_currentCharacter == null)
                 return;
 
-            // Restore the previous facing policy if combat destroys/unloads the target.
-            if (_hasFacingModeBeforeLockOn && _targetingService != null &&
-                !_targetingService.HasTarget)
+            // Restore previous camera/facing policies if a target is destroyed or unloaded.
+            if ((_hasFacingModeBeforeLockOn || _hasCameraViewBeforeLockOn) &&
+                _targetingService != null && !_targetingService.HasTarget)
                 ClearLockOn();
 
             bool canControl = _controlGate == null || _controlGate.CanControl(_currentCharacter);
@@ -202,7 +204,14 @@ namespace LOGIYGames.CharacterController
 
         public bool SetCameraView(string viewId)
         {
-            return _cameraService != null && _cameraService.SetView(viewId);
+            if (_cameraService == null || !_cameraService.SetView(viewId))
+                return false;
+
+            // An explicit view change during lock-on becomes the new restoration target.
+            if (_targetingService != null && _targetingService.HasTarget)
+                _hasCameraViewBeforeLockOn = false;
+
+            return true;
         }
 
         public bool SetLockOnTarget(Transform target)
@@ -211,15 +220,7 @@ namespace LOGIYGames.CharacterController
                 !_targetingService.SetTarget(target) || !_targetingService.HasTarget)
                 return false;
 
-            if (!_hasFacingModeBeforeLockOn && _locomotion != null)
-            {
-                _facingModeBeforeLockOn = _locomotion.FacingMode;
-                _hasFacingModeBeforeLockOn = true;
-            }
-
-            if (_locomotion != null)
-                _locomotion.SetFacingMode(CharacterFacingMode.LockOnTarget);
-
+            BeginLockOnPolicies();
             LockOnTargetChanged?.Invoke(CurrentLockOnTarget);
             return true;
         }
@@ -233,7 +234,14 @@ namespace LOGIYGames.CharacterController
             if (_hasFacingModeBeforeLockOn && _locomotion != null)
                 _locomotion.SetFacingMode(_facingModeBeforeLockOn);
 
+            if (_hasCameraViewBeforeLockOn && _cameraService != null &&
+                !string.IsNullOrWhiteSpace(_viewIdBeforeLockOn))
+                _cameraService.SetView(_viewIdBeforeLockOn);
+
             _hasFacingModeBeforeLockOn = false;
+            _hasCameraViewBeforeLockOn = false;
+            _viewIdBeforeLockOn = null;
+
             if (hadTarget)
                 LockOnTargetChanged?.Invoke(null);
         }
@@ -288,14 +296,34 @@ namespace LOGIYGames.CharacterController
 
             if (_targetingService.TryAcquire(_currentCharacter.CameraPivot, forward))
             {
-                if (_locomotion != null)
+                BeginLockOnPolicies();
+                LockOnTargetChanged?.Invoke(CurrentLockOnTarget);
+            }
+        }
+
+        private void BeginLockOnPolicies()
+        {
+            if (!_hasFacingModeBeforeLockOn && _locomotion != null)
+            {
+                _facingModeBeforeLockOn = _locomotion.FacingMode;
+                _hasFacingModeBeforeLockOn = true;
+            }
+
+            if (_locomotion != null)
+                _locomotion.SetFacingMode(CharacterFacingMode.LockOnTarget);
+
+            if (_cameraService != null)
+            {
+                if (!_hasCameraViewBeforeLockOn &&
+                    !string.IsNullOrWhiteSpace(_cameraService.ActiveViewId))
                 {
-                    _facingModeBeforeLockOn = _locomotion.FacingMode;
-                    _hasFacingModeBeforeLockOn = true;
-                    _locomotion.SetFacingMode(CharacterFacingMode.LockOnTarget);
+                    _viewIdBeforeLockOn = _cameraService.ActiveViewId;
+                    _hasCameraViewBeforeLockOn = true;
                 }
 
-                LockOnTargetChanged?.Invoke(CurrentLockOnTarget);
+                CharacterCameraProfile profile = _currentCharacter.Definition.CameraProfile;
+                if (profile != null && !string.IsNullOrWhiteSpace(profile.LockOnViewId))
+                    _cameraService.SetView(profile.LockOnViewId);
             }
         }
 

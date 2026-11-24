@@ -1,0 +1,17 @@
+{
+  "name": "LOGIYGames.CharacterController.GameplayRestrictions.Sample",
+  "rootNamespace": "LOGIYGames.CharacterController.Samples",
+  "references": [
+    "LOGIYGames.CharacterController",
+    "LOGIYGames.Core.Gameplay.Restrictions"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

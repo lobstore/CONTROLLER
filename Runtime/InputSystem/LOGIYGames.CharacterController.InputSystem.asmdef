@@ -1,0 +1,17 @@
+{
+  "name": "LOGIYGames.CharacterController.InputSystem",
+  "rootNamespace": "LOGIYGames.CharacterController.InputSystem",
+  "references": [
+    "LOGIYGames.CharacterController",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

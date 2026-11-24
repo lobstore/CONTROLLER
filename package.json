@@ -1,0 +1,27 @@
+{
+  "name": "com.logiygames.character-controller",
+  "version": "2.0.0",
+  "displayName": "LOGIY Games Character Controller",
+  "description": "Modular character, locomotion, animation, camera and lock-on framework for Unity.",
+  "unity": "2022.3",
+  "dependencies": {
+    "com.unity.inputsystem": "1.7.0"
+  },
+  "keywords": [
+    "character",
+    "controller",
+    "camera",
+    "locomotion",
+    "lock-on"
+  ],
+  "author": {
+    "name": "LOGIY Games"
+  },
+  "samples": [
+    {
+      "displayName": "Gameplay Restrictions Adapter",
+      "description": "Example integration with LOGIYGames Systems Coordinator restriction channels.",
+      "path": "Samples~/GameplayRestrictions"
+    }
+  ]
+}
