@@ -3,14 +3,14 @@ using UnityEngine;
 namespace LOGIYGames.CharacterController
 {
     /// <summary>
-    /// CharacterController-backed motor. Collision/velocity integration lives here
+    /// Unity CharacterController-backed motor. Collision/velocity integration lives here
     /// and can be replaced by Rigidbody, navigation or network-authoritative motors.
     /// </summary>
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(global::UnityEngine.CharacterController))]
     public sealed class CharacterMotor : MonoBehaviour, ICharacterMotor
     {
-        [SerializeField] private CharacterController characterController;
+        [SerializeField] private global::UnityEngine.CharacterController characterController;
 
         private Vector3 _planarVelocity;
         private float _verticalVelocity;
@@ -24,7 +24,7 @@ namespace LOGIYGames.CharacterController
         private void Awake()
         {
             if (characterController == null)
-                characterController = GetComponent<CharacterController>();
+                characterController = GetComponent<global::UnityEngine.CharacterController>();
         }
 
         public void Tick(
@@ -93,7 +93,7 @@ namespace LOGIYGames.CharacterController
         private void OnValidate()
         {
             if (characterController == null)
-                characterController = GetComponent<CharacterController>();
+                characterController = GetComponent<global::UnityEngine.CharacterController>();
         }
     }
 }
