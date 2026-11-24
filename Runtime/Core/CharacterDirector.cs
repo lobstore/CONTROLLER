@@ -104,16 +104,27 @@ namespace LOGIYGames.CharacterController
             if (_lastInput.NextCameraPressed && _cameraService != null)
                 _cameraService.CycleView(1);
 
-            Transform cameraTransform = _cameraService != null
-                ? _cameraService.CameraTransform
-                : null;
+            if (canControl)
+            {
+                Transform cameraTransform = _cameraService != null
+                    ? _cameraService.CameraTransform
+                    : null;
 
-            _locomotion.Tick(
-                _currentCharacter,
-                _lastInput,
-                cameraTransform,
-                CurrentLockOnTarget,
-                Time.deltaTime);
+                _locomotion.Tick(
+                    _currentCharacter,
+                    _lastInput,
+                    cameraTransform,
+                    CurrentLockOnTarget,
+                    Time.deltaTime);
+            }
+            else
+            {
+                // Keep gravity and motor simulation alive, but suppress facing and
+                // player movement while a stun/pause/cutscene gate is active.
+                CharacterMovementProfile profile = _currentCharacter.Definition.MovementProfile;
+                if (profile != null)
+                    _currentCharacter.Motor.Tick(Vector3.zero, false, false, profile, Time.deltaTime);
+            }
         }
 
         private void LateUpdate()
@@ -200,7 +211,8 @@ namespace LOGIYGames.CharacterController
 
         public bool SetLockOnTarget(Transform target)
         {
-            if (_targetingService == null || !_targetingService.SetTarget(target))
+            if (target == null || _targetingService == null ||
+                !_targetingService.SetTarget(target) || !_targetingService.HasTarget)
                 return false;
 
             if (!_hasFacingModeBeforeLockOn && _locomotion != null)
@@ -313,7 +325,12 @@ namespace LOGIYGames.CharacterController
             wasCreated = false;
             CharacterAgent cached;
             if (_instances.TryGetValue(definition, out cached))
-                return cached;
+            {
+                if (cached != null)
+                    return cached;
+
+                _instances.Remove(definition);
+            }
 
             if (definition.Prefab == null)
             {
@@ -370,11 +387,17 @@ namespace LOGIYGames.CharacterController
             for (int i = 0; i < roster.Length; i++)
             {
                 CharacterDefinition definition = roster[i];
-                if (definition == null || !definition.Id.IsValid)
+                if (definition == null)
                     continue;
 
+                if (!definition.Id.IsValid)
+                {
+                    Debug.LogWarning($"Character asset '{definition.name}' has an empty ID.", definition);
+                    continue;
+                }
+
                 if (!ids.Add(definition.Id.Value))
-                    Debug.LogWarning($"Duplicate character id '{definition.Id.Value}' in roster.", this);
+                    Debug.LogWarning($"Duplicate character ID '{definition.Id.Value}' in roster.", this);
             }
         }
     }
