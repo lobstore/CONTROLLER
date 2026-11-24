@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace LOGIYGames.CharacterController
 {
-    /// <summary>
-    /// Composition root for one locally-controlled character party. It owns
-    /// character switching and coordinates input, locomotion, camera and targeting.
-    /// Feature implementations remain replaceable behind narrow contracts.
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class CharacterDirector : MonoBehaviour
     {
@@ -77,8 +72,7 @@ namespace LOGIYGames.CharacterController
             if (_currentCharacter == null)
                 return;
 
-            // A target can be destroyed by combat or scene unloading without a
-            // direct call into the director. Restore the pre-lock facing policy.
+            // Restore the previous facing policy if combat destroys/unloads the target.
             if (_hasFacingModeBeforeLockOn && _targetingService != null &&
                 !_targetingService.HasTarget)
                 ClearLockOn();
@@ -119,8 +113,8 @@ namespace LOGIYGames.CharacterController
             }
             else
             {
-                // Keep gravity and motor simulation alive, but suppress facing and
-                // player movement while a stun/pause/cutscene gate is active.
+                // Keep gravity and motor simulation alive, but suppress input,
+                // movement intent and automatic facing while restricted.
                 CharacterMovementProfile profile = _currentCharacter.Definition.MovementProfile;
                 if (profile != null)
                     _currentCharacter.Motor.Tick(Vector3.zero, false, false, profile, Time.deltaTime);
@@ -172,7 +166,9 @@ namespace LOGIYGames.CharacterController
             nextCharacter.gameObject.SetActive(true);
             nextCharacter.Motor.SetControlEnabled(true);
             _currentCharacter = nextCharacter;
-            _locomotion = new CharacterLocomotionController(definition.DefaultFacingMode);
+            _locomotion = new CharacterLocomotionController(
+                definition.DefaultFacingMode,
+                nextCharacter.FacingStrategy);
 
             if (_cameraService != null)
                 _cameraService.SetProfile(definition.CameraProfile);
